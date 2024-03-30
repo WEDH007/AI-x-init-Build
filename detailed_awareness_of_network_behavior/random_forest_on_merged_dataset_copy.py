@@ -58,6 +58,9 @@ try:
     print("Training model...")
     training_start = time.time()
     rf_classifier = RandomForestClassifier(n_estimators=5, criterion='entropy', random_state=42)
+    # Save the column names of the processed training dataset
+    feature_columns = X_train.columns
+    dump(feature_columns, 'feature_columns.joblib')  # Save the feature names for later use
     rf_classifier.fit(X_train, y_train)
     training_end = time.time()
     print(f"Model trained in {training_end - training_start:.2f} seconds.")

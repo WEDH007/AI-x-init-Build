@@ -6,26 +6,37 @@ import time
 
 def preprocess_df(df, scaler=None, is_prediction=False):
     features_to_drop = ['src_ip', 'dst_ip', 'src_port', 'service', 'dst_port', 'ssl_version', 'ssl_cipher', 'ssl_subject', 'ssl_issuer', 'dns_query', 'dns_qclass', 'dns_qtype', 'dns_rcode', 'http_request_body_len', 'http_version', 'http_trans_depth', 'http_method', 'http_uri', 'http_response_body_len', 'http_status_code', 'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types', 'weird_name', 'weird_addl', 'weird_notice']
+    
     if 'ts' in df.columns:
         features_to_drop.append('ts')
     
-    df = df.drop(columns=features_to_drop)
+    df = df.drop(columns=features_to_drop, errors='ignore')  # Use errors='ignore' to ignore missing columns
+    
     categorical_cols = df.select_dtypes(include=['object', 'bool']).columns.tolist()
+    
     if is_prediction:
-        # Keep the 'type' column if predicting to use it later for the classification report
-        categorical_cols.remove('type')
+        # If 'type' column exists and it's a prediction scenario, we won't remove it but ensure it's not treated as a feature
+        if 'type' in categorical_cols:
+            categorical_cols.remove('type')
+    else:
+        # For training or evaluation, ensure 'type' column is removed from features but preserved in DataFrame if necessary
+        if 'type' in df.columns:
+            df['label'] = df['type']  # Optionally preserve 'type' information if needed
+            df = df.drop(columns=['type'])
+    
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
     df[numeric_cols] = df[numeric_cols].apply(lambda x: x.fillna(x.median()))
     df[categorical_cols] = df[categorical_cols].apply(lambda x: x.fillna(x.mode()[0]))
-    df = pd.get_dummies(df, columns=categorical_cols)
+    df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
     
     if scaler is None:
         scaler = StandardScaler()
         df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
     else:
         df[numeric_cols] = scaler.transform(df[numeric_cols])
-        
+    
     return df, scaler
+
 
 try:
     start_time = time.time()
@@ -35,7 +46,7 @@ try:
     feature_columns = load('feature_columns.joblib')
 
     print("Loading and preprocessing new dataset...")
-    file_path = 'train_test_network.csv'  # Update with your CSV file path
+    file_path = 'test_network.csv'  # Update with your CSV file path
     new_data = pd.read_csv(file_path)
     # Temporarily save the true labels for classification report
     true_labels = new_data['type'].copy()

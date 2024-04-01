@@ -87,7 +87,7 @@ try:
     # Load, preprocess, and test on new dataset
     print("Loading, preprocessing, and testing on new dataset...")
     new_load_start = time.time()
-    new_data = pd.read_csv('train_test_network.csv')
+    new_data = pd.read_csv('test_network.csv')
     new_data, _ = preprocess_df(new_data, scaler)
     new_X = new_data.drop('type', axis=1).reindex(columns=X.columns, fill_value=0)
     new_y = new_data['type']

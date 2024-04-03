@@ -36,7 +36,7 @@ def create_random_subset_without_column(input_csv_path, output_csv_path, percent
 # Example usage
 input_csv_path = 'Network_dataset_10.csv'
 output_csv_path = 'subset_10.csv'
-percentage = 0.5  # Example: 0.1% of the original data
+percentage = 0.01  # Example: 0.1% of the original data
 column_to_remove = 'type'  # Specify the column you want to remove
 
 create_random_subset_without_column(input_csv_path, output_csv_path, percentage, column_to_remove)

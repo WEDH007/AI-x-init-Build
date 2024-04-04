@@ -53,7 +53,7 @@ def send_alert(alert_data):
 async def detect_attacks(file: UploadFile = File(...)):
     df = pd.read_csv(file.file)
 
-    df_preprocessed, _ = preprocess_df(df, scaler, is_prediction=True)
+    df_preprocessed, _ = preprocess_df(df, scaler)
     df_aligned = df_preprocessed.reindex(columns=feature_columns, fill_value=0)
 
     predictions = rf_classifier.predict(df_aligned)

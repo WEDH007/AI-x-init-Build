@@ -59,6 +59,7 @@ async def detect_attacks(file: UploadFile = File(...)):
     predictions = rf_classifier.predict(df_aligned)
     df['type'] = predictions
 
+
     for index, row in df.iterrows():
         if row['type'] != 'normal':
             precision_score = precision.get(row['type'], "N/A")

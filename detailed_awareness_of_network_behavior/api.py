@@ -24,14 +24,14 @@ rf_classifier = load(model_path)
 scaler = load(scaler_path)
 feature_columns = load(feature_columns_path)
 
-f1_scores = {
-    "ddos": 0.88,
-    "dos": 0.98,
-    "injection": 0.95,
+precision = {
+    "ddos": 0.97,
+    "dos": 0.94,
+    "injection": 0.99,
     "normal": 1.00,
-    "password": 0.89,
-    "scanning": 0.89,
-    "xss": 0.86
+    "password": 0.91,
+    "scanning": 0.99,
+    "xss": 0.95
 }
 
 def send_alert(alert_data):
@@ -61,8 +61,8 @@ async def detect_attacks(file: UploadFile = File(...)):
 
     for index, row in df.iterrows():
         if row['type'] != 'normal':
-            f1_score = f1_scores.get(row['type'], "N/A")
-            probability = f"{f1_score * 100}%" if f1_score != "N/A" else "N/A"
+            precision_score = precision.get(row['type'], "N/A")
+            probability = f"{precision_score * 100}%" if precision_score != "N/A" else "N/A"
             alert_data = {
                 "attack": row["type"],
                 "probability": probability,

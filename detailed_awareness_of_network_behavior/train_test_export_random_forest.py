@@ -8,7 +8,7 @@ import time
 
 # Define the preprocess_df function
 def preprocess_df(df, scaler=None):
-    features_to_drop = ['src_ip', 'dst_ip', 'src_port', 'service', 'dst_port', 'ssl_version', 'ssl_cipher', 'ssl_subject', 'ssl_issuer', 'dns_query', 'dns_qclass', 'dns_qtype', 'dns_rcode', 'http_request_body_len', 'http_version', 'http_trans_depth', 'http_method', 'http_uri', 'http_response_body_len', 'http_status_code', 'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types', 'weird_name', 'weird_addl', 'weird_notice', 'label']
+    features_to_drop = ['src_ip', 'dst_ip', 'src_port', 'service', 'dst_port', 'ssl_version', 'ssl_cipher', 'ssl_subject', 'ssl_issuer', 'dns_query', 'dns_qclass', 'dns_qtype', 'dns_rcode', 'http_request_body_len', 'http_version', 'http_trans_depth', 'http_method', 'http_uri', 'http_response_body_len', 'http_status_code', 'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types', 'weird_name', 'weird_addl', 'weird_notice', 'label`']
     if 'ts' in df.columns:
         features_to_drop.append('ts')
     df = df.drop(columns=features_to_drop)

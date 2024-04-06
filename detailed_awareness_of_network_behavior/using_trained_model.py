@@ -51,9 +51,9 @@ try:
     print(report)
 
     # Optionally, save the predictions
-    new_data['predictions'] = predictions
-    new_data.to_csv('predictions_with_report.csv', index=False)
-    print("Predictions and classification report saved.")
+    # new_data['predictions'] = predictions
+    # new_data.to_csv('predictions_with_report.csv', index=False)
+    # print("Predictions and classification report saved.")
 
     end_time = time.time()
     print(f"Total runtime: {end_time - start_time:.2f} seconds")

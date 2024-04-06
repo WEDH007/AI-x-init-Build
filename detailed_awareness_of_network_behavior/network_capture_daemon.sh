@@ -2,7 +2,7 @@
 
 while true; do
     # Define variables
-    LOG_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.pcap"
+    LOG_FILE="/path/to/zeek/logs/current/"
     CSV_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.csv"
     API_ENDPOINT="http://127.0.0.1:8000/detect-attacks"
 

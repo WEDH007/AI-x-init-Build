@@ -2,9 +2,9 @@
 
 while true; do
     # Define variables
-    LOG_FILE="/path/to/zeek/logs/current/"
-    CSV_FILE="/path/to/captured_traffic.csv"
-    API_ENDPOINT="http://your-api-endpoint.com/upload"
+    LOG_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.pcap"
+    CSV_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.csv"
+    API_ENDPOINT="http://127.0.0.1:8000/detect-attacks"
 
     # Extract necessary fields from Zeek logs into a CSV format
     zeek-cut -d -F ts id.orig_h id.orig_p id.resp_h id.resp_p proto service \
@@ -24,4 +24,3 @@ while true; do
     # Sleep for a minute
     sleep 60
 done
-

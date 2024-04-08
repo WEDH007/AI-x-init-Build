@@ -1,81 +1,56 @@
-import pyshark
-
-    LOG_FILE="/opt/zeek/logs/current/"
-    CSV_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.csv"
-    API_ENDPOINT="http://127.0.0.1:8000/detect-attacks"
-
-
-import csv
+import subprocess
 import requests
 import time
+import os
 
-# API endpoint URL for model serving framework
-API_ENDPOINT = "http://localhost:8501/upload_csv"  # Example URL, replace with your actual endpoint
+while True:
+    # Define variables
+    CAPTURE_FILE = "/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.pcap"
+    CSV_FILE = "/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.csv"
+    API_ENDPOINT = "http://127.0.0.1:8000/detect-attacks"
 
-# Function to send CSV file to the API endpoint
-def send_csv_to_api(csv_filename):
-    try:
-        # Open the CSV file and prepare it for uploading
-        with open(csv_filename, 'rb') as file:
-            # Send a POST request with the CSV file
-            response = requests.post(API_ENDPOINT, files={'file': file})
-            if response.status_code == 200:
-                # Successfully uploaded CSV file
-                print("CSV file uploaded successfully")
-            else:
-                # Failed to upload CSV file, handle error
-                print("Error:", response.text)
-    except Exception as e:
-        # Exception occurred, handle error
-        print("Error:", str(e))
+    # Capture network traffic
+    subprocess.run(["tcpdump", "-i", "eth0", "-w", CAPTURE_FILE, "-c", "60"])
 
-# Preprocessing function (example, replace with your actual preprocessing logic)
-def preprocess_network_traffic(packet):
-    # Extract relevant features from the packet and preprocess them
-    # This is a placeholder, replace with your actual preprocessing logic
-    data = {
-        "source_ip": packet.ip.src,
-        "destination_ip": packet.ip.dst,
-        "source_port": packet.tcp.srcport if "tcp" in packet else None,
-        "destination_port": packet.tcp.dstport if "tcp" in packet else None,
-        # Add other relevant features here
-    }
-    return data
+    # Convert captured traffic to CSV
+    tshark_command = [
+        "tshark", "-r", CAPTURE_FILE, "-T", "fields",
+        "-e", "frame.time", "-e", "ip.src", "-e", "tcp.srcport", "-e", "ip.dst",
+        "-e", "tcp.dstport", "-e", "_ws.col.Protocol", "-e", "_ws.col.Info",
+        "-e", "tcp.len", "-e", "tcp.analysis.bytes_in_flight", "-e", "tcp.analysis.lost_segment",
+        "-e", "tcp.analysis.retransmission", "-e", "tcp.analysis.duplicate_ack",
+        "-e", "tcp.analysis.fast_retransmission", "-e", "tcp.analysis.out_of_order",
+        "-e", "tcp.analysis.window_full", "-e", "tcp.analysis.window_update",
+        "-e", "tcp.analysis.zero_window", "-e", "tcp.analysis.zero_window_probe",
+        "-e", "tcp.analysis.zero_window_probe_ack", "-e", "ip.ttl", "-e", "tcp.window_size",
+        "-e", "tcp.window_size_scalefactor", "-e", "tcp.flags.fin", "-e", "tcp.flags.syn",
+        "-e", "tcp.flags.ack", "-e", "tcp.flags.reset", "-e", "tcp.flags.push",
+        "-e", "tcp.flags.urg", "-e", "tcp.flags.cwr", "-e", "tcp.analysis.initial_rtt",
+        "-e", "ip.len", "-e", "ip.flags.mf", "-e", "ip.flags.df", "-e", "ip.flags.rb",
+        "-e", "ip.frag_offset", "-e", "ip.dsfield", "-e", "tcp.stream", "-e", "udp.stream",
+        "-e", "frame.number", "-e", "dns.qry.name", "-e", "dns.qry.type",
+        "-e", "dns.flags.response", "-e", "dns.flags.rcode", "-e", "dns.a",
+        "-e", "dns.aaaa", "-e", "dns.cname", "-e", "dns.resp.name", "-e", "dns.resp.type",
+        "-e", "dns.resp.class", "-e", "dns.resp.ttl", "-e", "dns.count.queries",
+        "-e", "dns.count.answers", "-e", "dns.count.auth_rr", "-e", "dns.count.add_rr",
+        "-e", "ssl.handshake.version", "-e", "ssl.handshake.ciphersuite",
+        "-e", "ssl.record.content_type", "-e", "ssl.handshake.cert_type",
+        "-e", "http.request.version", "-e", "http.request.method", "-e", "http.request.uri",
+        "-e", "http.request_in", "-e", "http.request.full_uri", "-e", "http.response.version",
+        "-e", "http.response.code", "-e", "http.user_agent", "-e", "http.content_type",
+        "-e", "http.response_in", "-e", "http.content_length", "-E", "header=y", "-E", "separator=,"
+    ]
+    
+    with open(CSV_FILE, "w") as csv_output:
+        subprocess.run(tshark_command, stdout=csv_output)
 
-# Function to capture packets using PyShark and save them to a CSV file
-def capture_and_save_packets(interface="eth0", csv_filename="captured_packets.csv", capture_duration=30):
-    # Open a CSV file for writing
-    with open(csv_filename, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        
-        # Write header row to CSV file
-        csv_writer.writerow(["source_ip", "destination_ip", "source_port", "destination_port"])  # Add other headers as needed
-        
-        # Capture packets on the specified network interface
-        capture = pyshark.LiveCapture(interface=interface)
-        start_time = time.time()
-        # Continuously capture and process packets
-        for packet in capture.sniff_continuously():
-            try:
-                # Preprocess the packet data
-                preprocessed_data = preprocess_network_traffic(packet)
-                # Write preprocessed data to CSV file
-                csv_writer.writerow([preprocessed_data["source_ip"], preprocessed_data["destination_ip"], preprocessed_data["source_port"], preprocessed_data["destination_port"]])
-            except KeyboardInterrupt:
-                # Stop packet capture if KeyboardInterrupt (Ctrl+C) is received
-                break
-            except Exception as e:
-                # Exception occurred, handle error and continue packet capture
-                print("Error:", str(e))
-                continue
+    # Send CSV data to API
+    files = {"file": open(CSV_FILE, "rb")}
+    response = requests.post(API_ENDPOINT, files=files)
 
-            # Check if capture duration has elapsed
-            if time.time() - start_time >= capture_duration:
-                break
+    # Clean up
+    os.remove(CAPTURE_FILE)
+    os.remove(CSV_FILE)
 
-    # Send the generated CSV file to the API endpoint
-    send_csv_to_api(csv_filename)
-
-if __name__ == "__main__":
-    # Start capturing and saving packets to a CSV file
-    capture_and_save_packets(interface="eth0", csv_filename="captured_packets.csv", capture_duration=30)
+    # Sleep for a minute
+    time.sleep(60)

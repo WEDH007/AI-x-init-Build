@@ -38,8 +38,8 @@ precision = {
 def send_alert(alert_data):
     headers = {'Content-Type': 'application/json'}
     response = requests.post(
-        # "https://spring2024-alerts.onrender.com/api/alerts",
-        "http://127.0.0.1:5000/api/alerts",
+        "https://spring2024-alerts.onrender.com/api/alerts",
+        # "http://127.0.0.1:5000/api/alerts",
         headers=headers,
         json=alert_data
     )

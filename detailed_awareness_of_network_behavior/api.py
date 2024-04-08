@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import requests
+import datetime
 from joblib import load
 from using_trained_model import preprocess_df
 
@@ -37,7 +38,8 @@ precision = {
 def send_alert(alert_data):
     headers = {'Content-Type': 'application/json'}
     response = requests.post(
-        "https://spring2024-alerts.onrender.com/api/alerts",
+        # "https://spring2024-alerts.onrender.com/api/alerts",
+        "http://127.0.0.1:5000/api/alerts",
         headers=headers,
         json=alert_data
     )
@@ -48,6 +50,11 @@ def send_alert(alert_data):
     except requests.exceptions.HTTPError as err:
         # Log the error
         print(f"Error sending alert: {err}")
+
+def epoch_to_date(epoch_timestamp):
+    """Converts an epoch timestamp to a human-readable date."""
+    return datetime.datetime.fromtimestamp(epoch_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+
 
 @app.post("/detect-attacks/")
 async def detect_attacks(file: UploadFile = File(...)):
@@ -67,7 +74,7 @@ async def detect_attacks(file: UploadFile = File(...)):
             alert_data = {
                 "attack": row["type"],
                 "probability": probability,
-                "date": pd.to_datetime(row["ts"]).strftime("%Y-%m-%dT%H:%M:%S"),
+                "date": epoch_to_date(row['ts']),
                 "src_ip": row["src_ip"],
             }
             send_alert(alert_data)

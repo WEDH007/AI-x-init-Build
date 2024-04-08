@@ -2,14 +2,14 @@
 
 while true; do
     # Define variables
-    CAPTURE_FILE="/path/to/captured_traffic.pcap"
+    CAPTURE_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.pcap"
     CSV_FILE="/root/AI-x-init-Build/detailed_awareness_of_network_behavior/captured_traffic.csv"
     API_ENDPOINT="http://127.0.0.1:8000/detect-attacks"
 
     # Capture network traffic
     tcpdump -i eth0 -w $CAPTURE_FILE -c 60  # Capture for 60 seconds
 
-    # Convert captured traffic to CSV
+    # Convert captured traffic to CSV 
     tshark -r $CAPTURE_FILE -T fields \
     -e frame.time -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport -e _ws.col.Protocol \
     -e _ws.col.Info -e tcp.len -e tcp.analysis.bytes_in_flight -e tcp.analysis.lost_segment \

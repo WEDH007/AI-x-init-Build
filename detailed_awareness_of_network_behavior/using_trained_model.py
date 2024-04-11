@@ -5,14 +5,22 @@ from joblib import load
 import time
 
 def preprocess_df(df, scaler=None):
-    features_to_drop = ['src_ip', 'dst_ip', 'src_port', 'service', 'dst_port', 'ssl_version', 'ssl_cipher', 'ssl_subject', 'ssl_issuer', 'dns_query', 'dns_qclass', 'dns_qtype', 'dns_rcode', 'http_request_body_len', 'http_version', 'http_trans_depth', 'http_method', 'http_uri', 'http_response_body_len', 'http_status_code', 'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types', 'weird_name', 'weird_addl', 'weird_notice', 'label']
+    features_to_drop = ['src_ip', 'dst_ip', 'src_port', 'service', 'dst_port', 'ssl_version', 'ssl_cipher', 'ssl_subject', 'ssl_issuer', 'dns_query', 'dns_qclass', 'dns_qtype', 'dns_rcode', 'http_request_body_len', 'http_version', 'http_trans_depth', 'http_method', 'http_uri', 'http_response_body_len', 'http_status_code', 'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types', 'weird_name', 'weird_addl', 'weird_notice']
     if 'ts' in df.columns:
         features_to_drop.append('ts')
+    if 'label' in df.columns:
+        features_to_drop.append('label')
+    if 'type' in df.columns:
+        features_to_drop.append('type')
     df = df.drop(columns=features_to_drop)
     categorical_cols = df.select_dtypes(include=['object', 'bool']).columns.tolist()
-    if 'type' in categorical_cols:
-        categorical_cols.remove('type')
+    # if 'type' in categorical_cols:
+    #     categorical_cols.remove('type')
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+    print("categorical")
+    print(categorical_cols)
+    print("numerical")
+    print(numeric_cols)
     df[numeric_cols] = df[numeric_cols].apply(lambda x: x.fillna(x.median()))
     df[categorical_cols] = df[categorical_cols].apply(lambda x: x.fillna(x.mode()[0]))
     df = pd.get_dummies(df, columns=categorical_cols)

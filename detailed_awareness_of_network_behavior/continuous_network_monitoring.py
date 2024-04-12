@@ -86,7 +86,7 @@ def send_data():
     """ Function to send data every 30 seconds """
     url = "http://127.0.0.1:8000/detect-attacks/"
     while True:
-        time.sleep(30)
+        time.sleep(10)
         try:
             with open('captured_network_data.csv', 'rb') as f:
                 files = {'file': ('captured_network_data.csv', f, 'text/csv')}

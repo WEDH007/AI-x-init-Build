@@ -1,16 +1,15 @@
 import pandas as pd
-from scapy.all import sniff, IP, TCP, UDP, DNS, DNSQR, DNSRR, Raw
+import requests
+import threading
 import time
+import os
+from scapy.all import sniff, IP, TCP, UDP, DNS, DNSQR, DNSRR, Raw
 
-# Protocol map for translating protocol numbers to names
-protocol_map = {
-    6: 'tcp',  # TCP
-    17: 'udp',  # UDP
-    1: 'icmp',  # ICMP
-}
+# Protocol map
+protocol_map = {6: 'tcp', 17: 'udp', 1: 'icmp'}
 
-def capture_network_traffic(output_file='captured_network_data.csv', capture_duration=30):
-    # Define the columns for the DataFrame
+def capture_network_traffic(output_file='captured_network_data.csv'):
+    """ Function to capture network traffic and save it to a CSV file """
     columns_order = [
         'ts', 'src_ip', 'src_port', 'dst_ip', 'dst_port', 'proto', 'service',
         'duration', 'src_bytes', 'dst_bytes', 'conn_state', 'missed_bytes',
@@ -23,8 +22,6 @@ def capture_network_traffic(output_file='captured_network_data.csv', capture_dur
         'http_user_agent', 'http_orig_mime_types', 'http_resp_mime_types',
         'weird_name', 'weird_addl', 'weird_notice'
     ]
-    
-    # Initialize a DataFrame with the specified columns and default values
     df = pd.DataFrame(columns=columns_order)
     default_values = {column: '-' for column in columns_order}
     default_values.update({
@@ -34,34 +31,22 @@ def capture_network_traffic(output_file='captured_network_data.csv', capture_dur
         'dst_pkts': 0, 'dst_ip_bytes': 0, 'http_request_body_len': 0, 'http_response_body_len': 0
     })
 
-    start_time = time.time()
-
     def packet_callback(packet):
-        """ Callback function to process each packet """
+        """ Process each packet """
         row = {key: default_values[key]() if callable(default_values[key]) else default_values[key] for key in columns_order}
-        
-        # Basic IP and transport layer data
         if IP in packet:
             row['src_ip'] = packet[IP].src
             row['dst_ip'] = packet[IP].dst
-            row['proto'] = protocol_map.get(packet[IP].proto, str(packet[IP].proto))  # Use the mapping
-
-        # DNS and HTTP data
+            row['proto'] = protocol_map.get(packet[IP].proto, str(packet[IP].proto))
         row.update(parse_dns(packet))
         row.update(parse_http(packet))
-
-        # Append row to DataFrame
+        
         nonlocal df
         df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+        if len(df) >= 100:  # Save every 100 packets to limit I/O operations
+            df.to_csv(output_file, mode='a', header=not os.path.exists(output_file), index=False)
+            df.drop(df.index, inplace=True)
 
-        # Check if capture duration has elapsed
-        if time.time() - start_time >= capture_duration:
-            df.to_csv(output_file, index=False)
-            print(f"Capture complete. Data saved to '{output_file}'.")
-            quit()
-
-    # Start packet capture
-    print("Starting packet capture...")
     sniff(prn=packet_callback, store=0)
 
 def parse_dns(packet):
@@ -97,4 +82,24 @@ def parse_http(packet):
                 }
     return {}
 
-capture_network_traffic(output_file='my_network_data.csv', capture_duration=60)
+def send_data():
+    """ Function to send data every 30 seconds """
+    url = "http://127.0.0.1:8000/detect-attacks/"
+    while True:
+        time.sleep(30)
+        try:
+            with open('captured_network_data.csv', 'rb') as f:
+                files = {'file': ('captured_network_data.csv', f, 'text/csv')}
+                response = requests.post(url, files=files)
+                print(response.text)
+        except Exception as e:
+            print(f"Failed to send data: {e}")
+
+if __name__ == "__main__":
+    # Thread for capturing network traffic
+    capture_thread = threading.Thread(target=capture_network_traffic)
+    capture_thread.start()
+
+    # Thread for sending the data
+    send_thread = threading.Thread(target=send_data)
+    send_thread.start()

@@ -67,17 +67,17 @@ async def detect_attacks(file: UploadFile = File(...)):
     df['type'] = predictions
 
 
-    for index, row in df.iterrows():
-        if row['type'] != 'normal':
-            precision_score = precision.get(row['type'], "N/A")
-            probability = f"{precision_score * 100}%" if precision_score != "N/A" else "N/A"
-            alert_data = {
-                "attack": row["type"],
-                "probability": probability,
-                "date": epoch_to_date(row['ts']),
-                "src_ip": row["src_ip"],
-            }
-            send_alert(alert_data)
+    # for index, row in df.iterrows():
+    #     if row['type'] != 'normal':``
+    #         precision_score = precision.get(row['type'], "N/A")
+    #         probability = f"{precision_score * 100}%" if precision_score != "N/A" else "N/A"
+    #         alert_data = {
+    #             "attack": row["type"],
+    #             "probability": probability,
+    #             "date": epoch_to_date(row['ts']),
+    #             "src_ip": row["src_ip"],
+    #         }
+    #         send_alert(alert_data)
 
     modified_csv_path = "modified_with_predictions.csv"
     df.to_csv(modified_csv_path, index=False)
